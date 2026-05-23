@@ -1,20 +1,21 @@
 ---
-import { url } from '../utils/url';
+import { langUrl } from '../utils/url';
 
 interface Props {
   id: string;
+  lang: string;
   title: string;
   description: string;
   cover?: string;
   genre?: string;
   platform?: string;
-  stageCount: number;
+  stagesLabel: string;
 }
 
-const { id, title, description, cover, genre, platform, stageCount } = Astro.props;
+const { id, lang, title, description, cover, genre, platform, stagesLabel } = Astro.props;
 ---
 
-<a href={url(`/games/${id}`)} class="game-card">
+<a href={langUrl(lang, `/games/${id}`)} class="game-card">
   <div class="cover">
     {cover
       ? <img src={cover} alt={title} loading="lazy" />
@@ -27,7 +28,7 @@ const { id, title, description, cover, genre, platform, stageCount } = Astro.pro
     <div class="meta">
       {genre && <span class="tag">{genre}</span>}
       {platform && <span class="tag">{platform}</span>}
-      <span class="stages">{stageCount} stage{stageCount !== 1 ? 's' : ''}</span>
+      <span class="stages">{stagesLabel}</span>
     </div>
   </div>
 </a>

@@ -1,29 +1,36 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-import HintReveal from '../../../components/HintReveal.astro';
+import Layout from '../../../../layouts/Layout.astro';
+import HintReveal from '../../../../components/HintReveal.astro';
 import { getCollection } from 'astro:content';
-import { url } from '../../../utils/url';
+import { locales, useT } from '../../../../i18n/translations';
+import type { Locale } from '../../../../i18n/translations';
+import { langUrl } from '../../../../utils/url';
 
 export async function getStaticPaths() {
   const stages = await getCollection('stages');
   return stages.map(stage => {
-    const [gameId, stageFile] = stage.id.split('/');
+    const [lang, gameSlug, stageFile] = stage.id.split('/');
     return {
-      params: { game: gameId, stage: stageFile },
+      params: { lang, game: gameSlug, stage: stageFile },
       props: { stage },
     };
   });
 }
 
+const { lang, game: gameSlug, stage: stageFile } = Astro.params as {
+  lang: Locale;
+  game: string;
+  stage: string;
+};
 const { stage } = Astro.props;
-const { game: gameId } = Astro.params;
+const t = useT(lang);
 
 const games = await getCollection('games');
-const game = games.find(g => g.id === gameId);
+const game = games.find(g => g.id === `${lang}/${gameSlug}`);
 
 const allStages = await getCollection('stages');
 const gameStages = allStages
-  .filter(s => s.data.game === gameId)
+  .filter(s => s.id.startsWith(lang + '/') && s.data.game === gameSlug)
   .sort((a, b) => a.data.stage - b.data.stage);
 
 const currentIndex = gameStages.findIndex(s => s.data.stage === stage.data.stage);
@@ -31,18 +38,20 @@ const prevStage = gameStages[currentIndex - 1];
 const nextStage = gameStages[currentIndex + 1];
 
 function stageUrl(s: typeof stage) {
-  const [, file] = s.id.split('/');
-  return url(`/games/${gameId}/${file}`);
+  const file = s.id.split('/').pop()!;
+  return langUrl(lang, `/games/${gameSlug}/${file}`);
 }
 ---
 
 <Layout
-  title={`Stage ${stage.data.stage}: ${stage.data.title} — ${game?.data.title ?? ''} — PuzzleHints`}
+  title={`${t.stage_label} ${stage.data.stage}: ${stage.data.title} — ${game?.data.title ?? ''} — ${t.site_title}`}
+  lang={lang}
+  localePath={`/games/${gameSlug}/${stageFile}`}
 >
   <nav class="breadcrumb">
-    <a href={url('/')}>Games</a>
+    <a href={langUrl(lang, '/')}>{t.nav_home}</a>
     <span>/</span>
-    <a href={url(`/games/${gameId}`)}>{game?.data.title ?? gameId}</a>
+    <a href={langUrl(lang, `/games/${gameSlug}`)}>{game?.data.title ?? gameSlug}</a>
     {stage.data.path.map(segment => (
       <>
         <span>/</span>
@@ -50,7 +59,7 @@ function stageUrl(s: typeof stage) {
       </>
     ))}
     <span>/</span>
-    <span>Stage {stage.data.stage}</span>
+    <span>{t.stage_label} {stage.data.stage}</span>
   </nav>
 
   {stage.data.image && (
@@ -60,17 +69,17 @@ function stageUrl(s: typeof stage) {
   )}
 
   <header class="stage-header">
-    <span class="stage-label">Stage {stage.data.stage}</span>
+    <span class="stage-label">{t.stage_label} {stage.data.stage}</span>
     <h1>{stage.data.title}</h1>
   </header>
 
   <section class="hints-section">
     <h2 class="section-title">
-      Hints
+      {t.hints_heading}
       <span class="count">{stage.data.hints.length}</span>
     </h2>
-    <p class="hint-intro">Click each hint to reveal it. Try the earlier hints before looking at later ones!</p>
-    <HintReveal hints={stage.data.hints} />
+    <p class="hint-intro">{t.hint_intro}</p>
+    <HintReveal hints={stage.data.hints} revealLabel={t.hint_reveal} />
   </section>
 
   <nav class="stage-nav">
@@ -79,15 +88,15 @@ function stageUrl(s: typeof stage) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
-        Stage {prevStage.data.stage}
+        {t.stage_label} {prevStage.data.stage}
       </a>
     ) : <span />}
 
-    <a href={url(`/games/${gameId}`)} class="nav-btn all">All Stages</a>
+    <a href={langUrl(lang, `/games/${gameSlug}`)} class="nav-btn all">{t.all_stages}</a>
 
     {nextStage ? (
       <a href={stageUrl(nextStage)} class="nav-btn next">
-        Stage {nextStage.data.stage}
+        {t.stage_label} {nextStage.data.stage}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
@@ -106,14 +115,9 @@ function stageUrl(s: typeof stage) {
     margin-bottom: 1.5rem;
   }
 
-  .breadcrumb a {
-    color: var(--accent);
-  }
+  .breadcrumb a { color: var(--accent); }
 
-  .bc-dim {
-    color: var(--text-muted);
-    font-style: italic;
-  }
+  .bc-dim { color: var(--text-muted); font-style: italic; }
 
   .stage-banner {
     margin-bottom: 1.5rem;
@@ -123,16 +127,9 @@ function stageUrl(s: typeof stage) {
     border: 1px solid var(--border);
   }
 
-  .stage-banner img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 0;
-  }
+  .stage-banner img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
 
-  .stage-header {
-    margin-bottom: 2rem;
-  }
+  .stage-header { margin-bottom: 2rem; }
 
   .stage-label {
     font-size: 0.8rem;
@@ -144,14 +141,9 @@ function stageUrl(s: typeof stage) {
     margin-bottom: 0.35rem;
   }
 
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-  }
+  h1 { font-size: 1.75rem; font-weight: 700; }
 
-  .hints-section {
-    margin-bottom: 3rem;
-  }
+  .hints-section { margin-bottom: 3rem; }
 
   .section-title {
     font-size: 1.05rem;
@@ -172,11 +164,7 @@ function stageUrl(s: typeof stage) {
     font-weight: 400;
   }
 
-  .hint-intro {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-  }
+  .hint-intro { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; }
 
   .stage-nav {
     display: flex;
@@ -207,8 +195,5 @@ function stageUrl(s: typeof stage) {
     text-decoration: none;
   }
 
-  .nav-btn.all {
-    color: var(--accent);
-    border-color: rgba(167, 139, 250, 0.3);
-  }
+  .nav-btn.all { color: var(--accent); border-color: rgba(167, 139, 250, 0.3); }
 </style>

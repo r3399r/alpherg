@@ -1,17 +1,27 @@
 ---
 import '../styles/global.css';
-import { url } from '../utils/url';
+import { langUrl } from '../utils/url';
+import { locales, bcp47 } from '../i18n/translations';
+import type { Locale } from '../i18n/translations';
 
 interface Props {
   title: string;
   description?: string;
+  lang: string;
+  localePath: string;
 }
 
-const { title, description = 'Puzzle game hints and walkthroughs' } = Astro.props;
+const { title, description = '', lang, localePath } = Astro.props;
+
+const langLabels: Record<string, string> = {
+  en: 'EN',
+  'zh-tw': '繁',
+  'zh-cn': '简',
+};
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={bcp47[lang as Locale] ?? lang}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -35,11 +45,95 @@ const { title, description = 'Puzzle game hints and walkthroughs' } = Astro.prop
         color: var(--accent);
         letter-spacing: 0.05em;
         text-decoration: none;
+        margin-right: auto;
       }
 
       nav .logo:hover {
         text-decoration: none;
         opacity: 0.85;
+      }
+
+      .lang-switcher {
+        position: relative;
+      }
+
+      .lang-trigger {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.3rem 0.65rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        user-select: none;
+        transition: border-color 0.15s, color 0.15s;
+      }
+
+      .lang-trigger:hover,
+      .lang-switcher:focus-within .lang-trigger {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .lang-trigger svg {
+        transition: transform 0.2s;
+      }
+
+      .lang-switcher:focus-within .lang-trigger svg {
+        transform: rotate(180deg);
+      }
+
+      .lang-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 0.4rem);
+        right: 0;
+        min-width: 7rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        z-index: 100;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+
+      .lang-switcher:focus-within .lang-menu {
+        display: block;
+      }
+
+      .lang-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: background 0.15s, color 0.15s;
+      }
+
+      .lang-option:hover {
+        background: var(--surface-2);
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .lang-option.active {
+        color: var(--accent);
+        background: rgba(167, 139, 250, 0.08);
+      }
+
+      .lang-option .check {
+        opacity: 0;
+        color: var(--accent);
+      }
+
+      .lang-option.active .check {
+        opacity: 1;
       }
 
       main {
@@ -51,7 +145,29 @@ const { title, description = 'Puzzle game hints and walkthroughs' } = Astro.prop
   </head>
   <body>
     <nav>
-      <a href={url('/')} class="logo">PuzzleHints</a>
+      <a href={langUrl(lang, '/')} class="logo">PuzzleHints</a>
+      <div class="lang-switcher" tabindex="0">
+        <div class="lang-trigger" aria-haspopup="true">
+          {langLabels[lang]}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <div class="lang-menu" role="menu">
+          {locales.map(l => (
+            <a
+              href={langUrl(l, localePath)}
+              class:list={['lang-option', { active: l === lang }]}
+              role="menuitem"
+            >
+              {langLabels[l]}
+              <svg class="check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
     </nav>
     <main>
       <slot />

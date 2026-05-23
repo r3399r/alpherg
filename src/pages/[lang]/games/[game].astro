@@ -1,22 +1,31 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import StageCard from '../../components/StageCard.astro';
+import Layout from '../../../layouts/Layout.astro';
+import StageCard from '../../../components/StageCard.astro';
 import { getCollection } from 'astro:content';
+import { locales, useT } from '../../../i18n/translations';
+import type { Locale } from '../../../i18n/translations';
+import { langUrl } from '../../../utils/url';
 import type { CollectionEntry } from 'astro:content';
-import { url } from '../../utils/url';
 
 export async function getStaticPaths() {
   const games = await getCollection('games');
-  return games.map(game => ({
-    params: { game: game.id },
-    props: { game },
-  }));
+  return games.map(game => {
+    const [lang, ...rest] = game.id.split('/');
+    const slug = rest.join('/');
+    return {
+      params: { lang, game: slug },
+      props: { game },
+    };
+  });
 }
 
+const { lang, game: gameSlug } = Astro.params as { lang: Locale; game: string };
 const { game } = Astro.props;
+const t = useT(lang);
+
 const allStages = await getCollection('stages');
 const stages = allStages
-  .filter(s => s.data.game === game.id)
+  .filter(s => s.id.startsWith(lang + '/') && s.data.game === gameSlug)
   .sort((a, b) => a.data.stage - b.data.stage);
 
 type StageEntry = CollectionEntry<'stages'>;
@@ -60,9 +69,14 @@ function flatten(node: TreeNode, depth: number): RenderItem[] {
 const renderItems = flatten(buildTree(stages), -1);
 ---
 
-<Layout title={`${game.data.title} — PuzzleHints`} description={game.data.description}>
+<Layout
+  title={`${game.data.title} — ${t.site_title}`}
+  description={game.data.description}
+  lang={lang}
+  localePath={`/games/${gameSlug}`}
+>
   <nav class="breadcrumb">
-    <a href={url('/')}>Games</a>
+    <a href={langUrl(lang, '/')}>{t.nav_home}</a>
     <span>/</span>
     <span>{game.data.title}</span>
   </nav>
@@ -82,10 +96,13 @@ const renderItems = flatten(buildTree(stages), -1);
   </header>
 
   <section>
-    <h2 class="section-title">Stages <span class="count">{stages.length}</span></h2>
+    <h2 class="section-title">
+      {t.stages_heading}
+      <span class="count">{stages.length}</span>
+    </h2>
 
     {stages.length === 0 ? (
-      <p class="empty">No stages added yet.</p>
+      <p class="empty">{t.no_stages}</p>
     ) : (
       <div class="stage-tree">
         {renderItems.map(item =>
@@ -96,11 +113,12 @@ const renderItems = flatten(buildTree(stages), -1);
           ) : (
             <div class="stage-item" style={`--depth: ${item.depth}`}>
               <StageCard
-                gameId={game.id}
+                gameId={gameSlug}
+                lang={lang}
                 stageNum={item.stage.data.stage}
                 title={item.stage.data.title}
                 image={item.stage.data.image}
-                hintCount={item.stage.data.hints.length}
+                hintLabel={t.hint_count(item.stage.data.hints.length)}
               />
             </div>
           )
@@ -120,9 +138,7 @@ const renderItems = flatten(buildTree(stages), -1);
     margin-bottom: 1.75rem;
   }
 
-  .breadcrumb a {
-    color: var(--accent);
-  }
+  .breadcrumb a { color: var(--accent); }
 
   .game-header {
     display: flex;
@@ -140,18 +156,9 @@ const renderItems = flatten(buildTree(stages), -1);
     border: 1px solid var(--border);
   }
 
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-  }
+  h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
 
-  .meta {
-    display: flex;
-    gap: 0.4rem;
-    margin-bottom: 0.6rem;
-    flex-wrap: wrap;
-  }
+  .meta { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
 
   .tag {
     font-size: 0.75rem;
@@ -162,11 +169,7 @@ const renderItems = flatten(buildTree(stages), -1);
     color: var(--text-muted);
   }
 
-  .desc {
-    color: var(--text-muted);
-    line-height: 1.6;
-    font-size: 0.95rem;
-  }
+  .desc { color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; }
 
   .section-title {
     font-size: 1.1rem;
@@ -187,10 +190,7 @@ const renderItems = flatten(buildTree(stages), -1);
     font-weight: 400;
   }
 
-  .stage-tree {
-    display: flex;
-    flex-direction: column;
-  }
+  .stage-tree { display: flex; flex-direction: column; }
 
   .group-heading {
     margin-left: calc(var(--depth) * 1.5rem);
@@ -205,21 +205,10 @@ const renderItems = flatten(buildTree(stages), -1);
     color: var(--text-muted);
   }
 
-  .group-heading:first-child {
-    margin-top: 0;
-  }
+  .group-heading:first-child { margin-top: 0; }
 
-  .stage-item {
-    margin-left: calc(var(--depth) * 1.5rem);
-    margin-bottom: 0.5rem;
-  }
+  .stage-item { margin-left: calc(var(--depth) * 1.5rem); margin-bottom: 0.5rem; }
+  .stage-item:last-child { margin-bottom: 0; }
 
-  .stage-item:last-child {
-    margin-bottom: 0;
-  }
-
-  .empty {
-    color: var(--text-muted);
-    padding: 2rem 0;
-  }
+  .empty { color: var(--text-muted); padding: 2rem 0; }
 </style>
