@@ -28,11 +28,8 @@ jobs:
 
       - run: npm ci
 
-      - uses: actions/configure-pages@v5
-        id: pages
-
       - name: Build
-        run: npm run build -- --site "${{ steps.pages.outputs.origin }}" --base "${{ steps.pages.outputs.base_path }}"
+        run: npm run build
 
       - uses: actions/upload-pages-artifact@v3
         with:

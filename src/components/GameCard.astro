@@ -1,4 +1,6 @@
 ---
+import { url } from '../utils/url';
+
 interface Props {
   id: string;
   title: string;
@@ -12,7 +14,7 @@ interface Props {
 const { id, title, description, cover, genre, platform, stageCount } = Astro.props;
 ---
 
-<a href={`/games/${id}`} class="game-card">
+<a href={url(`/games/${id}`)} class="game-card">
   <div class="cover">
     {cover
       ? <img src={cover} alt={title} loading="lazy" />

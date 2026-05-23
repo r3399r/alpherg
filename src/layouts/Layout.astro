@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { url } from '../utils/url';
 
 interface Props {
   title: string;
@@ -50,7 +51,7 @@ const { title, description = 'Puzzle game hints and walkthroughs' } = Astro.prop
   </head>
   <body>
     <nav>
-      <a href="/" class="logo">PuzzleHints</a>
+      <a href={url('/')} class="logo">PuzzleHints</a>
     </nav>
     <main>
       <slot />

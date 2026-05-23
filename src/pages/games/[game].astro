@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import StageCard from '../../components/StageCard.astro';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
+import { url } from '../../utils/url';
 
 export async function getStaticPaths() {
   const games = await getCollection('games');
@@ -61,7 +62,7 @@ const renderItems = flatten(buildTree(stages), -1);
 
 <Layout title={`${game.data.title} — PuzzleHints`} description={game.data.description}>
   <nav class="breadcrumb">
-    <a href="/">Games</a>
+    <a href={url('/')}>Games</a>
     <span>/</span>
     <span>{game.data.title}</span>
   </nav>

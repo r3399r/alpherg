@@ -2,6 +2,7 @@
 import Layout from '../../../layouts/Layout.astro';
 import HintReveal from '../../../components/HintReveal.astro';
 import { getCollection } from 'astro:content';
+import { url } from '../../../utils/url';
 
 export async function getStaticPaths() {
   const stages = await getCollection('stages');
@@ -31,7 +32,7 @@ const nextStage = gameStages[currentIndex + 1];
 
 function stageUrl(s: typeof stage) {
   const [, file] = s.id.split('/');
-  return `/games/${gameId}/${file}`;
+  return url(`/games/${gameId}/${file}`);
 }
 ---
 
@@ -39,9 +40,9 @@ function stageUrl(s: typeof stage) {
   title={`Stage ${stage.data.stage}: ${stage.data.title} — ${game?.data.title ?? ''} — PuzzleHints`}
 >
   <nav class="breadcrumb">
-    <a href="/">Games</a>
+    <a href={url('/')}>Games</a>
     <span>/</span>
-    <a href={`/games/${gameId}`}>{game?.data.title ?? gameId}</a>
+    <a href={url(`/games/${gameId}`)}>{game?.data.title ?? gameId}</a>
     {stage.data.path.map(segment => (
       <>
         <span>/</span>
@@ -82,7 +83,7 @@ function stageUrl(s: typeof stage) {
       </a>
     ) : <span />}
 
-    <a href={`/games/${gameId}`} class="nav-btn all">All Stages</a>
+    <a href={url(`/games/${gameId}`)} class="nav-btn all">All Stages</a>
 
     {nextStage ? (
       <a href={stageUrl(nextStage)} class="nav-btn next">

@@ -7,10 +7,12 @@ interface Props {
   hintCount: number;
 }
 
+import { url } from '../utils/url';
+
 const { gameId, stageNum, title, image, hintCount } = Astro.props;
 ---
 
-<a href={`/games/${gameId}/${stageNum}`} class="stage-card">
+<a href={url(`/games/${gameId}/${stageNum}`)} class="stage-card">
   {image && (
     <div class="stage-image">
       <img src={image} alt={title} loading="lazy" />
