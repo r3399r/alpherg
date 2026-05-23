@@ -1,0 +1,224 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import StageCard from '../../components/StageCard.astro';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const games = await getCollection('games');
+  return games.map(game => ({
+    params: { game: game.id },
+    props: { game },
+  }));
+}
+
+const { game } = Astro.props;
+const allStages = await getCollection('stages');
+const stages = allStages
+  .filter(s => s.data.game === game.id)
+  .sort((a, b) => a.data.stage - b.data.stage);
+
+type StageEntry = CollectionEntry<'stages'>;
+
+interface TreeNode {
+  label: string;
+  children: TreeNode[];
+  stages: StageEntry[];
+}
+
+function buildTree(stageList: StageEntry[]): TreeNode {
+  const root: TreeNode = { label: '', children: [], stages: [] };
+  for (const stage of stageList) {
+    let node = root;
+    for (const segment of stage.data.path) {
+      let child = node.children.find(c => c.label === segment);
+      if (!child) {
+        child = { label: segment, children: [], stages: [] };
+        node.children.push(child);
+      }
+      node = child;
+    }
+    node.stages.push(stage);
+  }
+  return root;
+}
+
+type RenderItem =
+  | { type: 'group'; label: string; depth: number }
+  | { type: 'stage'; stage: StageEntry; depth: number };
+
+function flatten(node: TreeNode, depth: number): RenderItem[] {
+  const items: RenderItem[] = [];
+  if (node.label) items.push({ type: 'group', label: node.label, depth });
+  const next = depth + 1;
+  for (const child of node.children) items.push(...flatten(child, next));
+  for (const stage of node.stages) items.push({ type: 'stage', stage, depth: next });
+  return items;
+}
+
+const renderItems = flatten(buildTree(stages), -1);
+---
+
+<Layout title={`${game.data.title} — PuzzleHints`} description={game.data.description}>
+  <nav class="breadcrumb">
+    <a href="/">Games</a>
+    <span>/</span>
+    <span>{game.data.title}</span>
+  </nav>
+
+  <header class="game-header">
+    {game.data.cover && (
+      <img class="cover" src={game.data.cover} alt={game.data.title} />
+    )}
+    <div>
+      <div class="meta">
+        {game.data.genre && <span class="tag">{game.data.genre}</span>}
+        {game.data.platform && <span class="tag">{game.data.platform}</span>}
+      </div>
+      <h1>{game.data.title}</h1>
+      <p class="desc">{game.data.description}</p>
+    </div>
+  </header>
+
+  <section>
+    <h2 class="section-title">Stages <span class="count">{stages.length}</span></h2>
+
+    {stages.length === 0 ? (
+      <p class="empty">No stages added yet.</p>
+    ) : (
+      <div class="stage-tree">
+        {renderItems.map(item =>
+          item.type === 'group' ? (
+            <div class="group-heading" style={`--depth: ${item.depth}`}>
+              {item.label}
+            </div>
+          ) : (
+            <div class="stage-item" style={`--depth: ${item.depth}`}>
+              <StageCard
+                gameId={game.id}
+                stageNum={item.stage.data.stage}
+                title={item.stage.data.title}
+                image={item.stage.data.image}
+                hintCount={item.stage.data.hints.length}
+              />
+            </div>
+          )
+        )}
+      </div>
+    )}
+  </section>
+</Layout>
+
+<style>
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.75rem;
+  }
+
+  .breadcrumb a {
+    color: var(--accent);
+  }
+
+  .game-header {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    align-items: flex-start;
+  }
+
+  .cover {
+    flex-shrink: 0;
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 100px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .desc {
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .count {
+    font-size: 0.8rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 0.1rem 0.5rem;
+    border-radius: 100px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .stage-tree {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .group-heading {
+    margin-left: calc(var(--depth) * 1.5rem);
+    margin-top: clamp(0.5rem, calc(1.75rem - var(--depth) * 0.3rem), 1.75rem);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    font-size: clamp(0.72rem, calc(0.95rem - var(--depth) * 0.08rem), 0.95rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+  }
+
+  .group-heading:first-child {
+    margin-top: 0;
+  }
+
+  .stage-item {
+    margin-left: calc(var(--depth) * 1.5rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .stage-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .empty {
+    color: var(--text-muted);
+    padding: 2rem 0;
+  }
+</style>
