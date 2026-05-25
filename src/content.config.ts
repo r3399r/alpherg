@@ -18,7 +18,7 @@ const stages = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/stages' }),
   schema: z.object({
     game: z.string(),
-    stage: z.number(),
+    order: z.number().default(999),
     path: z.array(z.string()).default([]),
     title: z.string(),
     image: z.string().optional(),

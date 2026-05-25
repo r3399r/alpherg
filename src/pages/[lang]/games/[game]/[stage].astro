@@ -31,9 +31,9 @@ const game = games.find(g => g.id === `${lang}/${gameSlug}`);
 const allStages = await getCollection('stages');
 const gameStages = allStages
   .filter(s => s.id.startsWith(lang + '/') && s.data.game === gameSlug)
-  .sort((a, b) => a.data.stage - b.data.stage);
+  .sort((a, b) => a.data.order - b.data.order);
 
-const currentIndex = gameStages.findIndex(s => s.data.stage === stage.data.stage);
+const currentIndex = gameStages.findIndex(s => s.id === stage.id);
 const prevStage = gameStages[currentIndex - 1];
 const nextStage = gameStages[currentIndex + 1];
 
@@ -44,7 +44,7 @@ function stageUrl(s: typeof stage) {
 ---
 
 <Layout
-  title={`${t.stage_label} ${stage.data.stage}: ${stage.data.title} — ${game?.data.title ?? ''} — ${t.site_title}`}
+  title={`${stage.data.title} — ${game?.data.title ?? ''} — ${t.site_title}`}
   lang={lang}
   localePath={`/games/${gameSlug}/${stageFile}`}
 >
@@ -59,7 +59,7 @@ function stageUrl(s: typeof stage) {
       </>
     ))}
     <span>/</span>
-    <span>{t.stage_label} {stage.data.stage}</span>
+    <span>{stage.data.title}</span>
   </nav>
 
   {stage.data.image && (
@@ -69,7 +69,6 @@ function stageUrl(s: typeof stage) {
   )}
 
   <header class="stage-header">
-    <span class="stage-label">{t.stage_label} {stage.data.stage}</span>
     <h1>{stage.data.title}</h1>
   </header>
 
@@ -88,7 +87,7 @@ function stageUrl(s: typeof stage) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
-        {t.stage_label} {prevStage.data.stage}
+        {prevStage.data.title}
       </a>
     ) : <span />}
 
@@ -96,7 +95,7 @@ function stageUrl(s: typeof stage) {
 
     {nextStage ? (
       <a href={stageUrl(nextStage)} class="nav-btn next">
-        {t.stage_label} {nextStage.data.stage}
+        {nextStage.data.title}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
@@ -123,23 +122,12 @@ function stageUrl(s: typeof stage) {
     margin-bottom: 1.5rem;
     border-radius: var(--radius);
     overflow: hidden;
-    max-height: 320px;
     border: 1px solid var(--border);
   }
 
-  .stage-banner img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+  .stage-banner img { width: 100%; height: auto; display: block; border-radius: 0; }
 
   .stage-header { margin-bottom: 2rem; }
-
-  .stage-label {
-    font-size: 0.8rem;
-    color: var(--accent);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    display: block;
-    margin-bottom: 0.35rem;
-  }
 
   h1 { font-size: 1.75rem; font-weight: 700; }
 

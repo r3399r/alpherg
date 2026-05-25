@@ -26,7 +26,7 @@ const t = useT(lang);
 const allStages = await getCollection('stages');
 const stages = allStages
   .filter(s => s.id.startsWith(lang + '/') && s.data.game === gameSlug)
-  .sort((a, b) => a.data.stage - b.data.stage);
+  .sort((a, b) => a.data.order - b.data.order);
 
 type StageEntry = CollectionEntry<'stages'>;
 
@@ -115,7 +115,7 @@ const renderItems = flatten(buildTree(stages), -1);
               <StageCard
                 gameId={gameSlug}
                 lang={lang}
-                stageNum={item.stage.data.stage}
+                stageSlug={item.stage.id.split('/').pop()!}
                 title={item.stage.data.title}
                 image={item.stage.data.image}
                 hintLabel={t.hint_count(item.stage.data.hints.length)}

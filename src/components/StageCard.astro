@@ -4,23 +4,22 @@ import { langUrl } from '../utils/url';
 interface Props {
   gameId: string;
   lang: string;
-  stageNum: number;
+  stageSlug: string;
   title: string;
   image?: string;
   hintLabel: string;
 }
 
-const { gameId, lang, stageNum, title, image, hintLabel } = Astro.props;
+const { gameId, lang, stageSlug, title, image, hintLabel } = Astro.props;
 ---
 
-<a href={langUrl(lang, `/games/${gameId}/${stageNum}`)} class="stage-card">
+<a href={langUrl(lang, `/games/${gameId}/${stageSlug}`)} class="stage-card">
   {image && (
     <div class="stage-image">
       <img src={image} alt={title} loading="lazy" />
     </div>
   )}
   <div class="stage-info">
-    <span class="stage-label">Stage {stageNum}</span>
     <h3>{title}</h3>
     <span class="hint-count">{hintLabel}</span>
   </div>
@@ -65,14 +64,6 @@ const { gameId, lang, stageNum, title, image, hintLabel } = Astro.props;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-  }
-
-  .stage-label {
-    font-size: 0.75rem;
-    color: var(--accent);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   h3 {

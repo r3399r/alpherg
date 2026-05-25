@@ -1,6 +1,6 @@
 ---
 game: "baba-is-you"
-order: 1
+order: 0
 path: ["Overworld"]
 title: "Level 00"
 image: "/images/games/baba-is-you/Level00.webp"
